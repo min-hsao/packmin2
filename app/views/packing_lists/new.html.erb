@@ -1,0 +1,219 @@
+<div class="py-10">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">✨ Create New Packing List</h1>
+      <p class="mt-2 text-gray-600">Tell us about your trip and we'll generate a personalized packing list.</p>
+    </div>
+
+    <%= form_with model: @packing_list, url: packing_lists_path, class: "space-y-8" do |f| %>
+      
+      <!-- Destinations -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">📍 Destinations</h2>
+        <div id="destinations-container">
+          <div class="destination-entry grid grid-cols-1 gap-4 sm:grid-cols-3 mb-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Location</label>
+              <input type="text" name="packing_list[destinations][][location]" placeholder="e.g., Tokyo, Japan" 
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Start Date</label>
+              <input type="date" name="packing_list[destinations][][start_date]" 
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">End Date</label>
+              <input type="date" name="packing_list[destinations][][end_date]" 
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="addDestination()" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-500">
+          <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Add another destination
+        </button>
+        
+        <% if @saved_locations.any? %>
+          <div class="mt-4 pt-4 border-t">
+            <p class="text-sm text-gray-500">Quick add from saved locations:</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <% @saved_locations.each do |loc| %>
+                <button type="button" onclick="addSavedLocation('<%= j(loc.address) %>')" 
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 hover:bg-gray-200 text-gray-700">
+                  <%= loc.name %>
+                </button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Traveler Info -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">👤 Traveler Info</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Gender</label>
+            <select name="packing_list[traveler_info][gender]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+              <option value="">Select...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Age Range</label>
+            <select name="packing_list[traveler_info][age]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+              <option value="">Select...</option>
+              <option value="child">Child (under 12)</option>
+              <option value="teen">Teen (13-17)</option>
+              <option value="adult">Adult (18-59)</option>
+              <option value="senior">Senior (60+)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Sleepwear Preference</label>
+            <select name="packing_list[traveler_info][sleepwear]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+              <option value="">Select...</option>
+              <option value="pajamas">Pajamas</option>
+              <option value="t-shirt_shorts">T-shirt & shorts</option>
+              <option value="nothing">Nothing (sleep nude)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Shirt Size</label>
+            <input type="text" name="packing_list[traveler_info][shirt_size]" placeholder="e.g., M, L, XL"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Pants Size</label>
+            <input type="text" name="packing_list[traveler_info][pants_size]" placeholder="e.g., 32, 34"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Shoe Size</label>
+            <input type="text" name="packing_list[traveler_info][shoe_size]" placeholder="e.g., US 10, EU 43"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Activities -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">🎯 Planned Activities</h2>
+        <div class="flex flex-wrap gap-2" id="activities-container">
+          <% Activity::PRESETS.each do |activity| %>
+            <label class="inline-flex items-center px-3 py-2 rounded-full text-sm cursor-pointer border border-gray-300 hover:border-blue-500 has-[:checked]:bg-blue-100 has-[:checked]:border-blue-500 has-[:checked]:text-blue-700">
+              <input type="checkbox" name="packing_list[activities][]" value="<%= activity %>" class="sr-only">
+              <%= activity %>
+            </label>
+          <% end %>
+        </div>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700">Other activities (comma-separated)</label>
+          <input type="text" name="packing_list[activities][]" placeholder="e.g., scuba diving, wine tasting"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+        </div>
+      </div>
+
+      <!-- Luggage & Laundry -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">🧳 Luggage & Laundry</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Luggage Volume (liters)</label>
+            <input type="number" name="packing_list[luggage_volume]" placeholder="e.g., 45"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            <p class="mt-1 text-xs text-gray-500">Or describe below if unsure</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Or describe your luggage</label>
+            <input type="text" name="packing_list[luggage_name]" placeholder="e.g., carry-on, large suitcase"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+          </div>
+        </div>
+        <div class="mt-4">
+          <label class="flex items-center">
+            <input type="checkbox" name="packing_list[laundry_available]" value="true"
+                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <span class="ml-2 text-sm text-gray-700">Laundry facilities available at destination</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Additional Notes -->
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">📝 Additional Notes</h2>
+        <textarea name="packing_list[notes]" rows="3" placeholder="Any special requirements, medical needs, preferences..."
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></textarea>
+        
+        <% if @custom_items.any? %>
+          <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+            <p class="text-sm font-medium text-blue-700">✓ These items will be automatically included:</p>
+            <ul class="mt-2 text-sm text-blue-600">
+              <% @custom_items.each do |item| %>
+                <li>• <%= item.name %> (<%= item.category %>)</li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex items-center justify-end gap-4">
+        <%= link_to "Cancel", packing_lists_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+        <%= f.submit "Generate Packing List ✨", class: "inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+function addDestination() {
+  const container = document.getElementById('destinations-container');
+  const entry = document.createElement('div');
+  entry.className = 'destination-entry grid grid-cols-1 gap-4 sm:grid-cols-3 mb-4';
+  entry.innerHTML = `
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Location</label>
+      <input type="text" name="packing_list[destinations][][location]" placeholder="e.g., Tokyo, Japan" 
+             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Start Date</label>
+      <input type="date" name="packing_list[destinations][][start_date]" 
+             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+    </div>
+    <div class="relative">
+      <label class="block text-sm font-medium text-gray-700">End Date</label>
+      <input type="date" name="packing_list[destinations][][end_date]" 
+             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+      <button type="button" onclick="this.closest('.destination-entry').remove()" 
+              class="absolute top-0 right-0 text-red-500 hover:text-red-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  `;
+  container.appendChild(entry);
+}
+
+function addSavedLocation(address) {
+  const container = document.getElementById('destinations-container');
+  const firstInput = container.querySelector('input[name*="[location]"]');
+  if (firstInput && !firstInput.value) {
+    firstInput.value = address;
+  } else {
+    addDestination();
+    const newEntry = container.lastElementChild;
+    newEntry.querySelector('input[name*="[location]"]').value = address;
+  }
+}
+</script>

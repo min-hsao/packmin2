@@ -1,0 +1,110 @@
+<div class="py-10">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <% if logged_in? %>
+      <!-- Logged in dashboard -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Welcome back, <%= current_user.display_name %>! 👋</h1>
+        <p class="mt-2 text-gray-600">Ready to pack for your next adventure?</p>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+        <%= link_to new_packing_list_path, class: "relative block rounded-lg border-2 border-dashed border-blue-300 p-12 text-center hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-blue-50 hover:bg-blue-100 transition-colors" do %>
+          <span class="text-4xl">✨</span>
+          <span class="mt-2 block text-lg font-semibold text-blue-900">New Packing List</span>
+          <span class="mt-1 block text-sm text-blue-700">Generate with AI</span>
+        <% end %>
+
+        <%= link_to saved_locations_path, class: "relative block rounded-lg border border-gray-200 p-6 text-center hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white hover:bg-gray-50 transition-colors" do %>
+          <span class="text-3xl">📍</span>
+          <span class="mt-2 block text-sm font-semibold text-gray-900">Saved Locations</span>
+          <span class="mt-1 block text-sm text-gray-500"><%= @saved_locations_count %> saved</span>
+        <% end %>
+
+        <%= link_to custom_items_path, class: "relative block rounded-lg border border-gray-200 p-6 text-center hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white hover:bg-gray-50 transition-colors" do %>
+          <span class="text-3xl">🧳</span>
+          <span class="mt-2 block text-sm font-semibold text-gray-900">Custom Items</span>
+          <span class="mt-1 block text-sm text-gray-500"><%= @custom_items_count %> items</span>
+        <% end %>
+      </div>
+
+      <!-- Recent packing lists -->
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Packing Lists</h2>
+        <% if @recent_lists.any? %>
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <ul role="list" class="divide-y divide-gray-200">
+              <% @recent_lists.each do |list| %>
+                <li>
+                  <%= link_to list, class: "block hover:bg-gray-50 px-4 py-4 sm:px-6" do %>
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm font-medium text-blue-600 truncate"><%= list.title %></p>
+                        <p class="text-sm text-gray-500"><%= list.total_items_count %> items</p>
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        <%= time_ago_in_words(list.created_at) %> ago
+                      </div>
+                    </div>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+          <div class="mt-4">
+            <%= link_to "View all →", packing_lists_path, class: "text-sm text-blue-600 hover:text-blue-500" %>
+          </div>
+        <% else %>
+          <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <span class="text-4xl">📋</span>
+            <p class="mt-2 text-gray-500">No packing lists yet.</p>
+            <p class="text-sm text-gray-400">Create your first one!</p>
+          </div>
+        <% end %>
+      </div>
+
+    <% else %>
+      <!-- Landing page for logged out users -->
+      <div class="text-center py-20">
+        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+          Pack smarter with
+          <span class="text-blue-600">AI</span>
+        </h1>
+        <p class="mt-6 text-lg leading-8 text-gray-600 max-w-2xl mx-auto">
+          Never forget an essential again. PackMin uses AI to generate personalized packing lists 
+          based on your destination, weather, and activities.
+        </p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+          <%= link_to "/auth/google_oauth2", method: :post, class: "rounded-md bg-blue-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 flex items-center", data: { turbo: false } do %>
+            <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign in with Google
+          <% end %>
+        </div>
+
+        <!-- Features -->
+        <div class="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-3 max-w-4xl mx-auto">
+          <div class="text-center">
+            <div class="text-4xl mb-3">🌤️</div>
+            <h3 class="font-semibold text-gray-900">Weather-Aware</h3>
+            <p class="text-sm text-gray-500 mt-1">Automatically considers forecast for your destination</p>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl mb-3">🎯</div>
+            <h3 class="font-semibold text-gray-900">Activity-Based</h3>
+            <p class="text-sm text-gray-500 mt-1">Tailored suggestions based on your planned activities</p>
+          </div>
+          <div class="text-center">
+            <div class="text-4xl mb-3">🤖</div>
+            <h3 class="font-semibold text-gray-900">AI-Powered</h3>
+            <p class="text-sm text-gray-500 mt-1">Uses your choice of AI providers for smart suggestions</p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

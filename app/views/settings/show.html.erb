@@ -1,0 +1,111 @@
+<div class="py-10">
+  <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
+      <p class="mt-2 text-gray-600">Manage your AI providers and API keys.</p>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-8">
+      <%= form_with model: @user, url: settings_path, method: :patch, class: "space-y-6" do |f| %>
+        
+        <!-- AI Provider -->
+        <div class="pb-6 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">AI Configuration</h3>
+          
+          <div class="mb-4">
+            <%= f.label :ai_provider, "AI Provider", class: "block text-sm font-medium text-gray-700" %>
+            <div class="mt-1">
+              <%= f.select :ai_provider, 
+                  User::AI_PROVIDERS.map { |k, v| ["#{v[:name]} - #{v[:description]}", k] },
+                  { prompt: "Select a provider..." },
+                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", id: "ai_provider" } %>
+            </div>
+          </div>
+
+          <div id="api_key_section" class="<%= @user.requires_api_key? ? '' : 'hidden' %>">
+            <%= f.label :ai_api_key, "API Key", class: "block text-sm font-medium text-gray-700" %>
+            <div class="mt-1">
+              <%= f.password_field :ai_api_key, 
+                  value: @user.ai_api_key,
+                  placeholder: "sk-...",
+                  class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">Leave unchanged to keep current key.</p>
+          </div>
+
+          <div id="cli_warning" class="<%= @user.cli_provider? ? '' : 'hidden' %> mt-4">
+            <div class="rounded-md bg-yellow-50 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-yellow-700">CLI providers do not work in the web interface. Please select an API-based provider.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather API -->
+        <div class="pb-6 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Weather Integration</h3>
+          
+          <div>
+            <%= f.label :openweather_api_key, "OpenWeather API Key", class: "block text-sm font-medium text-gray-700" %>
+            <div class="mt-1">
+              <%= f.password_field :openweather_api_key, 
+                  value: @user.openweather_api_key,
+                  placeholder: "Your OpenWeather API key",
+                  class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">Required for weather forecasts in packing lists.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end">
+          <%= f.submit "Save Settings", class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+    
+    <div class="mt-8 text-center">
+      <h3 class="text-sm font-medium text-gray-500">Account Management</h3>
+      <div class="mt-2">
+        <%= button_to logout_path, method: :delete, class: "text-red-600 hover:text-red-500 text-sm font-medium" do %>
+          Sign out
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('turbo:load', function() {
+  const providerSelect = document.getElementById('ai_provider');
+  const apiKeySection = document.getElementById('api_key_section');
+  const cliWarning = document.getElementById('cli_warning');
+  
+  if (!providerSelect) return;
+
+  const cliProviders = ['gemini-cli', 'claude-cli'];
+  const apiProviders = ['deepseek', 'openai', 'gemini', 'anthropic'];
+
+  providerSelect.addEventListener('change', function() {
+    const selected = this.value;
+    
+    if (cliProviders.includes(selected)) {
+      apiKeySection.classList.add('hidden');
+      cliWarning.classList.remove('hidden');
+    } else if (apiProviders.includes(selected)) {
+      apiKeySection.classList.remove('hidden');
+      cliWarning.classList.add('hidden');
+    } else {
+      apiKeySection.classList.add('hidden');
+      cliWarning.classList.add('hidden');
+    }
+  });
+});
+</script>

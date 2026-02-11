@@ -1,0 +1,49 @@
+<%= form_with(model: custom_item, class: "space-y-6") do |f| %>
+  <% if custom_item.errors.any? %>
+    <div class="bg-red-50 p-4 rounded-md">
+      <h3 class="text-sm font-medium text-red-800">Errors prevented saving:</h3>
+      <ul class="mt-2 text-sm text-red-700 list-disc pl-5">
+        <% custom_item.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, class: "block text-sm font-medium text-gray-700" %>
+    <div class="mt-1">
+      <%= f.text_field :name, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :category, class: "block text-sm font-medium text-gray-700" %>
+    <div class="mt-1">
+      <%= f.select :category, CustomItem::CATEGORIES.map { |c| [c.titleize, c] }, { prompt: "Select a category..." }, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :volume_liters, "Volume (Liters) - Optional", class: "block text-sm font-medium text-gray-700" %>
+    <div class="mt-1">
+      <%= f.number_field :volume_liters, step: 0.1, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+    </div>
+    <p class="mt-1 text-sm text-gray-500">Helps in estimating total luggage volume needed.</p>
+  </div>
+
+  <div class="relative flex items-start">
+    <div class="flex h-5 items-center">
+      <%= f.check_box :always_pack, class: "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+    </div>
+    <div class="ml-3 text-sm">
+      <%= f.label :always_pack, class: "font-medium text-gray-700" %>
+      <p class="text-gray-500">Automatically include this item in every packing list.</p>
+    </div>
+  </div>
+
+  <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+    <%= link_to "Cancel", custom_items_path, class: "bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50" %>
+    <%= f.submit class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700" %>
+  </div>
+<% end %>

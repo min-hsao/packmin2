@@ -1,0 +1,21 @@
+# MariaDB on NAS
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DATABASE_HOST", "diskstation.sea.mintrix.net") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 3306) %>
+  username: <%= ENV.fetch("DATABASE_USERNAME", "packmin2") %>
+  password: <%= ENV["DATABASE_PASSWORD"] %>
+
+development:
+  <<: *default
+  database: packmin2_development
+
+test:
+  <<: *default
+  database: packmin2_test
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "packmin2") %>
