@@ -1,73 +1,65 @@
 class PackingListsController < ApplicationController
   before_action :set_packing_list, only: [:show, :destroy, :regenerate]
-
+  
   def index
-    @packing_lists = current_user.packing_lists.order(created_at: :desc)
+    @packing_lists = current_user.packing_lists.recent.page(params[:page]).per(10)
   end
-
-  def show
-  end
-
+  
   def new
-    @packing_list = current_user.packing_lists.new
-    @saved_locations = current_user.saved_locations
-    @custom_items = current_user.custom_items.always_pack
+    @packing_list = current_user.packing_lists.build
+    @saved_locations = current_user.saved_locations.recent
     @activities = current_user.activities
+    @custom_items = current_user.custom_items.always_packed
   end
-
+  
   def create
-    service = PackingListGenerator.new(current_user, packing_list_params)
-    result = service.generate
-
-    if result[:success]
-      @packing_list = result[:packing_list]
-      flash[:notice] = "Packing list generated successfully!"
-      redirect_to @packing_list
+    @packing_list = current_user.packing_lists.build(packing_list_params)
+    @packing_list.status = 'generating'
+    
+    if @packing_list.save
+      GeneratePackingListJob.perform_later(@packing_list.id)
+      redirect_to @packing_list, notice: "Generating your packing list..."
     else
-      flash[:alert] = result[:error]
-      redirect_to new_packing_list_path
+      @saved_locations = current_user.saved_locations.recent
+      @activities = current_user.activities
+      @custom_items = current_user.custom_items.always_packed
+      render :new, status: :unprocessable_entity
     end
   end
-
+  
+  def show
+    respond_to do |format|
+      format.html
+      format.turbo_stream if @packing_list.status == 'generating'
+    end
+  end
+  
   def destroy
     @packing_list.destroy
-    flash[:notice] = "Packing list deleted."
-    redirect_to packing_lists_path
+    redirect_to packing_lists_path, notice: "Packing list deleted."
   end
-
+  
   def regenerate
-    service = PackingListGenerator.new(current_user, {
-      destinations: @packing_list.destinations,
-      traveler_info: @packing_list.traveler_info,
-      notes: @packing_list.notes
-    })
-    
-    result = service.regenerate(@packing_list)
-
-    if result[:success]
-      flash[:notice] = "Packing list regenerated!"
-    else
-      flash[:alert] = result[:error]
-    end
-    
-    redirect_to @packing_list
+    @packing_list.update(status: 'generating', generated_list: {}, raw_response: nil)
+    GeneratePackingListJob.perform_later(@packing_list.id)
+    redirect_to @packing_list, notice: "Regenerating your packing list..."
   end
-
+  
   private
-
+  
   def set_packing_list
     @packing_list = current_user.packing_lists.find(params[:id])
   end
-
+  
   def packing_list_params
     params.require(:packing_list).permit(
-      :notes,
-      :laundry_available,
       :luggage_volume,
       :luggage_name,
-      traveler_info: [:gender, :age, :shirt_size, :pants_size, :shoe_size, :sleepwear],
-      destinations: [:location, :start_date, :end_date],
-      activities: []
+      :activities,
+      :laundry_available,
+      :additional_notes,
+      traveler_info: [:gender, :age, :clothing_size, :shoe_size, :sleepwear],
+      destinations: [:location, :start_date, :end_date]
     )
   end
 end

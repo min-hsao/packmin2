@@ -1,13 +1,9 @@
 class SavedLocation < ApplicationRecord
   belongs_to :user
-
-  validates :name, presence: true
+  
+  validates :name, presence: true, uniqueness: { scope: :user_id }
   validates :address, presence: true
-
-  # Store default activities as JSON array
-  serialize :default_activities, coder: JSON
-
-  def display_name
-    "#{name} (#{address.truncate(30)})"
-  end
+  
+  scope :favorites, -> { where(favorite: true) }
+  scope :recent, -> { order(updated_at: :desc) }
 end

@@ -1,0 +1,111 @@
+<div class="min-h-screen bg-gray-50 py-12">
+  <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">🎒 Welcome to PackMin2!</h1>
+      <p class="text-gray-600 mt-2">Let's set up your account to get started.</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+      <%= form_with model: current_user, url: setup_path, method: :post, local: true do |f| %>
+        
+        <!-- AI Provider -->
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">🤖 AI Provider</h2>
+          <p class="text-sm text-gray-600 mb-4">Choose which AI will generate your packing lists.</p>
+          
+          <div class="space-y-3">
+            <% @ai_providers.each do |key, provider| %>
+              <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors
+                <%= current_user.ai_provider == key ? 'border-blue-500 bg-blue-50' : 'border-gray-200' %>">
+                <%= f.radio_button :ai_provider, key, class: "mr-3", data: { action: "change->setup#toggleApiKey" } %>
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900"><%= provider[:name] %></div>
+                  <div class="text-sm text-gray-500"><%= provider[:description] %></div>
+                </div>
+                <% if provider[:needs_key] %>
+                  <span class="text-xs text-gray-400">🔑 API Key</span>
+                <% end %>
+              </label>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- API Key -->
+        <div class="mb-6" id="api-key-section">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            API Key
+          </label>
+          <%= f.password_field :ai_api_key, 
+              class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+              placeholder: "Enter your API key" %>
+          <p class="text-sm text-gray-500 mt-2">
+            Get your API key from your provider's dashboard. It will be encrypted.
+          </p>
+        </div>
+        
+        <!-- Weather API -->
+        <div class="mb-6 pt-6 border-t border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">🌤️ Weather API (Optional)</h2>
+          <p class="text-sm text-gray-600 mb-4">For accurate weather forecasts. 
+            <a href="https://openweathermap.org/api" target="_blank" class="text-blue-600 hover:underline">Get a free key</a>
+          </p>
+          
+          <%= f.text_field :openweather_api_key, 
+              class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+              placeholder: "OpenWeatherMap API key (optional)" %>
+        </div>
+        
+        <!-- Traveler Defaults -->
+        <div class="mb-6 pt-6 border-t border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">👤 Traveler Defaults</h2>
+          <p class="text-sm text-gray-600 mb-4">Pre-fill these for faster list creation.</p>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <%= f.select :default_gender, 
+                  options_for_select([['Not specified', ''], ['Male', 'male'], ['Female', 'female'], ['Other', 'other']], current_user.default_gender),
+                  {}, 
+                  class: "w-full px-3 py-2 border border-gray-300 rounded-lg" %>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+              <%= f.number_field :default_age, 
+                  class: "w-full px-3 py-2 border border-gray-300 rounded-lg",
+                  placeholder: "30" %>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Clothing Size</label>
+              <%= f.text_field :default_clothing_size, 
+                  class: "w-full px-3 py-2 border border-gray-300 rounded-lg",
+                  placeholder: "e.g., Men's M" %>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Shoe Size</label>
+              <%= f.text_field :default_shoe_size, 
+                  class: "w-full px-3 py-2 border border-gray-300 rounded-lg",
+                  placeholder: "e.g., US 10" %>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sleepwear Preference</label>
+            <%= f.select :default_sleepwear, 
+                options_for_select([['Minimal', 'minimal'], ['Dedicated pajamas', 'dedicated'], ['None', 'none']], current_user.default_sleepwear),
+                {},
+                class: "w-full px-3 py-2 border border-gray-300 rounded-lg" %>
+          </div>
+        </div>
+        
+        <!-- Submit -->
+        <div class="pt-6">
+          <%= f.submit "Complete Setup →", 
+              class: "w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,62 +1,42 @@
 class User < ApplicationRecord
-  # Encrypted attributes for API keys
-  encrypts :ai_api_key, deterministic: false
-  encrypts :openweather_api_key, deterministic: false
-
+  devise :database_authenticatable, :registerable,
+         :recoverable, :rememberable, :validatable,
+         :omniauthable, omniauth_providers: [:google_oauth2]
+  
   # Associations
   has_many :packing_lists, dependent: :destroy
   has_many :saved_locations, dependent: :destroy
   has_many :custom_items, dependent: :destroy
   has_many :activities, dependent: :destroy
-
+  
+  # Encrypts sensitive fields
+  encrypts :ai_api_key, deterministic: false
+  encrypts :openweather_api_key, deterministic: false
+  
   # Validations
   validates :email, presence: true, uniqueness: true
-  validates :uid, presence: true
-  validates :provider, presence: true
-
-  # Available AI providers
-  AI_PROVIDERS = {
-    "deepseek" => { name: "DeepSeek", requires_key: true, description: "DeepSeek AI - Fast and affordable" },
-    "openai" => { name: "OpenAI", requires_key: true, description: "GPT-4 and GPT-3.5 models" },
-    "gemini" => { name: "Google Gemini", requires_key: true, description: "Google's Gemini Pro" },
-    "anthropic" => { name: "Anthropic", requires_key: true, description: "Claude models" },
-    "gemini-cli" => { name: "Gemini CLI", requires_key: false, description: "⚠️ CLI only - won't work on server" },
-    "claude-cli" => { name: "Claude CLI", requires_key: false, description: "⚠️ CLI only - won't work on server" }
-  }.freeze
-
-  def self.find_or_create_from_oauth(auth)
-    user = find_by(provider: auth.provider, uid: auth.uid)
-
-    if user
-      user.update(
-        email: auth.info.email,
-        name: auth.info.name,
-        avatar_url: auth.info.image
-      )
-    else
-      user = create!(
-        provider: auth.provider,
-        uid: auth.uid,
-        email: auth.info.email,
-        name: auth.info.name,
-        avatar_url: auth.info.image,
-        setup_completed: false
-      )
+  validates :ai_provider, inclusion: { 
+    in: %w[deepseek openai gemini anthropic], 
+    allow_blank: true 
+  }
+  
+  # OAuth callback
+  def self.from_omniauth(auth)
+    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
+      user.email = auth.info.email
+      user.password = Devise.friendly_token[0, 20]
+      user.name = auth.info.name
+      user.avatar_url = auth.info.image
     end
-
-    user
   end
-
-  def requires_api_key?
-    return false unless ai_provider.present?
-    AI_PROVIDERS.dig(ai_provider, :requires_key) || false
+  
+  # Check if setup is complete
+  def setup_complete?
+    ai_provider.present? && ai_api_key.present?
   end
-
-  def cli_provider?
-    %w[gemini-cli claude-cli].include?(ai_provider)
-  end
-
+  
+  # Get display name
   def display_name
-    name.presence || email.split("@").first
+    name.presence || email.split('@').first
   end
 end

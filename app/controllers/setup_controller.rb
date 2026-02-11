@@ -1,30 +1,40 @@
 class SetupController < ApplicationController
-  skip_before_action :require_setup
-
-  def show
-    if current_user.setup_completed?
-      redirect_to root_path
-      return
-    end
-    @user = current_user
+  skip_before_action :check_setup!
+  
+  AI_PROVIDERS = {
+    'deepseek' => { name: 'DeepSeek', needs_key: true, description: 'Fast and affordable AI' },
+    'openai' => { name: 'OpenAI (GPT-4)', needs_key: true, description: 'Most capable, higher cost' },
+    'gemini' => { name: 'Google Gemini', needs_key: true, description: 'Google\'s latest AI' },
+    'anthropic' => { name: 'Anthropic Claude', needs_key: true, description: 'Safe and helpful AI' }
+  }.freeze
+  
+  def index
+    @ai_providers = AI_PROVIDERS
   end
-
+  
   def update
-    @user = current_user
-
-    if @user.update(setup_params)
-      @user.update!(setup_completed: true)
-      flash[:notice] = "Setup complete! Welcome to PackMin."
-      redirect_to root_path
+    if current_user.update(setup_params)
+      current_user.update(setup_completed: true)
+      redirect_to dashboard_path, notice: "Setup complete! You're ready to create packing lists."
     else
+      @ai_providers = AI_PROVIDERS
       flash.now[:alert] = "Please fix the errors below."
-      render :show, status: :unprocessable_entity
+      render :index, status: :unprocessable_entity
     end
   end
-
+  
   private
-
+  
   def setup_params
-    params.require(:user).permit(:ai_provider, :ai_api_key, :openweather_api_key)
+    params.require(:user).permit(
+      :ai_provider, 
+      :ai_api_key, 
+      :openweather_api_key,
+      :default_gender,
+      :default_age,
+      :default_clothing_size,
+      :default_shoe_size,
+      :default_sleepwear
+    )
   end
 end

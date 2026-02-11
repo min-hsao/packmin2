@@ -1,0 +1,99 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+        Welcome back, <%= current_user.display_name %>!
+      </h1>
+      <p class="text-gray-600 mt-1">Ready to pack smart for your next trip?</p>
+    </div>
+    
+    <%= link_to new_packing_list_path, 
+        class: "mt-4 sm:mt-0 inline-flex items-center justify-center px-5 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors" do %>
+      <span class="mr-2">+</span>
+      New Packing List
+    <% end %>
+  </div>
+  
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div class="text-2xl font-bold text-blue-600"><%= current_user.packing_lists.count %></div>
+      <div class="text-sm text-gray-600">Packing Lists</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div class="text-2xl font-bold text-green-600"><%= current_user.saved_locations.count %></div>
+      <div class="text-sm text-gray-600">Saved Locations</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div class="text-2xl font-bold text-purple-600"><%= @custom_items_count %></div>
+      <div class="text-sm text-gray-600">Custom Items</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div class="text-2xl font-bold text-orange-600"><%= @activities_count %></div>
+      <div class="text-sm text-gray-600">Activity Presets</div>
+    </div>
+  </div>
+  
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- Recent Lists -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Packing Lists</h2>
+      
+      <% if @recent_lists.any? %>
+        <div class="space-y-3">
+          <% @recent_lists.each do |list| %>
+            <%= link_to list, class: "block p-3 rounded-lg hover:bg-gray-50 transition-colors" do %>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-900"><%= list.title %></div>
+                  <div class="text-sm text-gray-500"><%= list.created_at.strftime('%b %d, %Y') %></div>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full 
+                  <%= list.status == 'complete' ? 'bg-green-100 text-green-700' : 
+                      list.status == 'generating' ? 'bg-yellow-100 text-yellow-700' : 
+                      'bg-gray-100 text-gray-700' %>">
+                  <%= list.status.titleize %>
+                </span>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+        
+        <%= link_to "View all →", packing_lists_path, class: "block mt-4 text-sm text-blue-600 hover:text-blue-700" %>
+      <% else %>
+        <p class="text-gray-500 text-center py-8">
+          No packing lists yet.<br>
+          <%= link_to "Create your first one!", new_packing_list_path, class: "text-blue-600 hover:underline" %>
+        </p>
+      <% end %>
+    </div>
+    
+    <!-- Saved Locations -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Favorite Locations</h2>
+      
+      <% if @saved_locations.any? %>
+        <div class="space-y-3">
+          <% @saved_locations.each do |location| %>
+            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
+              <div class="flex items-center">
+                <span class="text-xl mr-3">📍</span>
+                <div>
+                  <div class="font-medium text-gray-900"><%= location.name %></div>
+                  <div class="text-sm text-gray-500"><%= location.address %></div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <%= link_to "Manage locations →", saved_locations_path, class: "block mt-4 text-sm text-blue-600 hover:text-blue-700" %>
+      <% else %>
+        <p class="text-gray-500 text-center py-8">
+          Save frequently visited locations for faster packing list creation.
+          <%= link_to "Add a location", new_saved_location_path, class: "text-blue-600 hover:underline" %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>

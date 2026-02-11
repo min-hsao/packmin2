@@ -1,112 +1,31 @@
-<div class="py-10">
-  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="mb-8 flex items-start justify-between">
-      <div>
-        <div class="flex items-center text-sm text-gray-500 mb-2">
-          <%= link_to "← Back to Lists", packing_lists_path, class: "hover:text-gray-700" %>
-        </div>
-        <h1 class="text-3xl font-bold text-gray-900"><%= @packing_list.title %></h1>
-        <p class="mt-2 text-gray-600">
-          Created <%= time_ago_in_words(@packing_list.created_at) %> ago
-          • <%= @packing_list.total_items_count %> items
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <%= button_to regenerate_packing_list_path(@packing_list), method: :post, 
-            class: "inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50",
-            data: { confirm: "Regenerate this list? The current items will be replaced." } do %>
-          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-          </svg>
-          Regenerate
-        <% end %>
-        <button onclick="window.print()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
-          </svg>
-          Print
-        </button>
-      </div>
+<%= turbo_stream_from "packing_list_#{@packing_list.id}" %>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @packing_list.title %></h1>
+      <p class="text-gray-600"><%= @packing_list.total_days %> days • <%= @packing_list.destination_names %></p>
     </div>
-
-    <!-- Trip Details Summary -->
-    <% if @packing_list.destinations.present? %>
-      <div class="bg-blue-50 rounded-lg p-4 mb-6">
-        <h3 class="font-medium text-blue-900 mb-2">Trip Details</h3>
-        <div class="text-sm text-blue-700">
-          <% @packing_list.destinations.each do |dest| %>
-            <p>📍 <%= dest['location'] %> 
-              <% if dest['start_date'] && dest['end_date'] %>
-                (<%= Date.parse(dest['start_date']).strftime('%b %d') %> - <%= Date.parse(dest['end_date']).strftime('%b %d, %Y') %>)
-              <% end %>
-            </p>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
-    <!-- Packing List -->
-    <% if @packing_list.generated_list.present? %>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <% @packing_list.generated_list.each do |category, items| %>
-          <% next unless items.is_a?(Array) && items.any? %>
-          <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-900 capitalize mb-4 flex items-center">
-              <span class="mr-2">
-                <% case category.downcase %>
-                <% when 'clothing' %>👕
-                <% when 'toiletries' %>🧴
-                <% when 'electronics' %>📱
-                <% when 'documents' %>📄
-                <% when 'accessories' %>👜
-                <% when 'medications' %>💊
-                <% else %>📦
-                <% end %>
-              </span>
-              <%= category.titleize %>
-              <span class="ml-auto text-sm font-normal text-gray-500"><%= items.size %> items</span>
-            </h2>
-            <ul class="space-y-2">
-              <% items.each do |item| %>
-                <li class="flex items-start">
-                  <label class="flex items-start cursor-pointer group">
-                    <input type="checkbox" class="mt-1 rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <span class="ml-2 text-gray-700 group-has-[:checked]:line-through group-has-[:checked]:text-gray-400">
-                      <%= item %>
-                    </span>
-                  </label>
-                </li>
-              <% end %>
-            </ul>
-          </div>
+    
+    <div class="flex gap-2 mt-4 sm:mt-0">
+      <% if @packing_list.status == 'complete' %>
+        <%= link_to regenerate_packing_list_path(@packing_list), 
+            method: :post,
+            class: "px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" do %>
+          🔄 Regenerate
         <% end %>
-      </div>
-    <% else %>
-      <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <span class="text-4xl">🤔</span>
-        <p class="mt-2 text-gray-500">No items generated yet.</p>
-        <%= button_to regenerate_packing_list_path(@packing_list), method: :post, 
-            class: "mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" do %>
-          Generate Items
-        <% end %>
-      </div>
-    <% end %>
-
-    <!-- Notes -->
-    <% if @packing_list.notes.present? %>
-      <div class="mt-6 bg-gray-50 rounded-lg p-4">
-        <h3 class="font-medium text-gray-900 mb-2">Notes</h3>
-        <p class="text-sm text-gray-600"><%= @packing_list.notes %></p>
-      </div>
-    <% end %>
+      <% end %>
+      
+      <%= link_to @packing_list, 
+          method: :delete,
+          data: { confirm: "Are you sure you want to delete this packing list?" },
+          class: "px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50" do %>
+        🗑️ Delete
+      <% end %>
+    </div>
+  </div>
+  
+  <div id="packing_list_content">
+    <%= render 'content', packing_list: @packing_list %>
   </div>
 </div>
-
-<style>
-@media print {
-  nav, button, .no-print { display: none !important; }
-  body { background: white !important; }
-  .shadow { box-shadow: none !important; }
-}
-</style>

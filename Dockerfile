@@ -1,9 +1,16 @@
-# Dockerfile for PackMin2
-ARG RUBY_VERSION=3.3.0
-FROM ruby:$RUBY_VERSION-slim as base
+# syntax=docker/dockerfile:1
+FROM ruby:3.3.0-slim AS base
 
-# Rails app lives here
-WORKDIR /rails
+WORKDIR /app
+
+# Install base dependencies
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    libpq-dev \
+    libjemalloc2 \
+    libvips \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # Set production environment
 ENV RAILS_ENV="production" \
@@ -11,12 +18,23 @@ ENV RAILS_ENV="production" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development"
 
-# Throw-away build stage to reduce size of final image
-FROM base as build
+# Build stage
+FROM base AS build
 
-# Install packages needed to build gems and node modules
+# Install build dependencies
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential default-libmysqlclient-dev git libvips pkg-config
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    node-gyp \
+    pkg-config \
+    python-is-python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js for asset compilation
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
@@ -26,32 +44,27 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
-# Precompile bootsnap code for faster boot times
+# Precompile bootsnap code
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile assets
+RUN SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 
-# Final stage for app image
+# Final stage
 FROM base
 
-# Install packages needed for deployment
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl default-mysql-client libvips && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Copy built artifacts: gems, application
+# Copy built artifacts
 COPY --from=build /usr/local/bundle /usr/local/bundle
-COPY --from=build /rails /rails
+COPY --from=build /app /app
 
-# Run and own only the runtime files as a non-root user for security
+# Create non-root user
 RUN useradd rails --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp
 USER rails:rails
 
-# Entrypoint prepares the database.
-ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+# Entrypoint prepares the database
+ENTRYPOINT ["/app/bin/docker-entrypoint"]
 
-# Start the server by default, this can be overwritten at runtime
+# Start the server
 EXPOSE 3000
-CMD ["./bin/rails", "server"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]

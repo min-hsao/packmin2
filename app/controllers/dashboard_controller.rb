@@ -1,12 +1,8 @@
 class DashboardController < ApplicationController
-  skip_before_action :require_login, only: [:show]
-  skip_before_action :require_setup, only: [:show]
-
-  def show
-    if logged_in?
-      @recent_lists = current_user.packing_lists.recent
-      @saved_locations_count = current_user.saved_locations.count
-      @custom_items_count = current_user.custom_items.count
-    end
+  def index
+    @recent_lists = current_user.packing_lists.recent.limit(5)
+    @saved_locations = current_user.saved_locations.favorites.limit(5)
+    @custom_items_count = current_user.custom_items.count
+    @activities_count = current_user.activities.count
   end
 end

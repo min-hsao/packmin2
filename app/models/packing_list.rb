@@ -1,33 +1,43 @@
 class PackingList < ApplicationRecord
   belongs_to :user
-
-  # Store JSON data
-  serialize :destinations, coder: JSON
-  serialize :traveler_info, coder: JSON
-  serialize :generated_list, coder: JSON
-
-  validates :destinations, presence: true
-  validates :traveler_info, presence: true
-
-  # Scopes
-  scope :recent, -> { order(created_at: :desc).limit(10) }
-
-  def title
-    if destinations.is_a?(Array) && destinations.any?
-      destination_names = destinations.map { |d| d["name"] || d["location"] }.compact
-      destination_names.join(", ").truncate(50)
-    else
-      "Packing List ##{id}"
-    end
+  
+  STATUSES = %w[draft generating complete error].freeze
+  
+  validates :status, inclusion: { in: STATUSES }
+  
+  before_create :set_title
+  
+  scope :recent, -> { order(created_at: :desc) }
+  scope :complete, -> { where(status: 'complete') }
+  
+  def destination_names
+    destinations.map { |d| d['location'] }.join(', ')
   end
-
-  def total_items_count
-    return 0 unless generated_list.is_a?(Hash)
-    
-    count = 0
-    generated_list.each do |_category, items|
-      count += items.size if items.is_a?(Array)
+  
+  def total_days
+    destinations.sum { |d| 
+      start_date = Date.parse(d['start_date']) rescue nil
+      end_date = Date.parse(d['end_date']) rescue nil
+      next 0 unless start_date && end_date
+      (end_date - start_date).to_i + 1
+    }
+  end
+  
+  def parsed_list
+    return {} if generated_list.blank?
+    generated_list.is_a?(String) ? JSON.parse(generated_list) : generated_list
+  rescue JSON::ParserError
+    {}
+  end
+  
+  private
+  
+  def set_title
+    return if title.present?
+    self.title = if destinations.any?
+      "#{destination_names} - #{destinations.first['start_date']}"
+    else
+      "Packing List #{created_at&.strftime('%Y-%m-%d') || 'New'}"
     end
-    count
   end
 end

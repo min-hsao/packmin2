@@ -1,32 +1,38 @@
 Rails.application.routes.draw do
-  # Health check
-  get "up" => "rails/health#show", as: :rails_health_check
-
-  # Authentication
-  get "/auth/:provider/callback", to: "sessions#create"
-  get "/auth/failure", to: "sessions#failure"
-  delete "/logout", to: "sessions#destroy"
-
+  # Devise routes for authentication
+  devise_for :users, controllers: {
+    omniauth_callbacks: 'users/omniauth_callbacks'
+  }
+  
   # Setup wizard
-  get "/setup", to: "setup#show"
-  patch "/setup", to: "setup#update"
-
+  get 'setup', to: 'setup#index', as: :setup
+  post 'setup', to: 'setup#update'
+  
   # Dashboard
-  root "dashboard#show"
-
-  # Packing Lists
-  resources :packing_lists, only: [:index, :show, :new, :create, :destroy] do
+  get 'dashboard', to: 'dashboard#index', as: :dashboard
+  
+  # Packing lists
+  resources :packing_lists, only: [:index, :new, :create, :show, :destroy] do
     member do
       post :regenerate
     end
   end
-
-  # User resources
+  
+  # Saved locations
   resources :saved_locations
+  
+  # Custom items
   resources :custom_items
+  
+  # Activities/presets
   resources :activities
-
-  # Settings
-  get "/settings", to: "settings#show"
-  patch "/settings", to: "settings#update"
+  
+  # User settings
+  resource :settings, only: [:show, :update]
+  
+  # Health check for Docker
+  get 'up', to: 'rails/health#show', as: :rails_health_check
+  
+  # Root
+  root 'home#index'
 end
