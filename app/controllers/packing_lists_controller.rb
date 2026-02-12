@@ -53,6 +53,7 @@ class PackingListsController < ApplicationController
   
   def packing_list_params
     params.require(:packing_list).permit(
+      :ai_provider,
       :luggage_volume,
       :luggage_name,
       :activities,

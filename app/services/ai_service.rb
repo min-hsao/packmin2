@@ -2,9 +2,14 @@ class AiService
   SYSTEM_PROMPT = "You are a travel packing expert who creates efficient, comprehensive packing lists using capsule wardrobe principles."
   
   class << self
-    def generate(prompt, user)
-      provider = provider_for(user.ai_provider)
-      provider.new(user.ai_api_key).generate(prompt)
+    def generate(prompt, user, provider_override = nil)
+      provider_name = provider_override.presence || user.ai_provider
+      provider = provider_for(provider_name)
+      
+      # For Google OAuth, we pass the oauth_token instead of api_key
+      key = provider_name == 'google_oauth' ? user.oauth_token : user.ai_api_key
+      
+      provider.new(key).generate(prompt)
     end
     
     private
@@ -15,6 +20,7 @@ class AiService
       when 'openai' then OpenAiProvider
       when 'gemini' then GeminiProvider
       when 'anthropic' then AnthropicProvider
+      when 'google_oauth' then GoogleOAuthProvider
       else raise "Unknown AI provider: #{name}"
       end
     end
@@ -92,7 +98,7 @@ class AiService
     end
   end
   
-  # Gemini provider
+  # Gemini provider (API Key)
   class GeminiProvider < BaseProvider
     def generate(prompt)
       url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=#{@api_key}"
@@ -105,6 +111,24 @@ class AiService
       end
       
       raise "Gemini API error: #{response.status}" unless response.success?
+      response.body.dig('candidates', 0, 'content', 'parts', 0, 'text') || ''
+    end
+  end
+
+  # Google OAuth Provider (Uses Token)
+  class GoogleOAuthProvider < BaseProvider
+    def generate(prompt)
+      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+      
+      response = connection.post(url) do |req|
+        req.headers['Authorization'] = "Bearer #{@api_key}"
+        req.body = {
+          contents: [{ parts: [{ text: full_prompt(prompt) }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4000 }
+        }
+      end
+      
+      raise "Google OAuth API error: #{response.status} - #{response.body}" unless response.success?
       response.body.dig('candidates', 0, 'content', 'parts', 0, 'text') || ''
     end
   end

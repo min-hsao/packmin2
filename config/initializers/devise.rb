@@ -19,9 +19,10 @@ Devise.setup do |config|
     ENV['GOOGLE_CLIENT_ID'],
     ENV['GOOGLE_CLIENT_SECRET'],
     {
-      scope: 'email,profile',
+      scope: 'email,profile,https://www.googleapis.com/auth/generative-language',
       prompt: 'select_account',
       image_aspect_ratio: 'square',
-      image_size: 96
+      image_size: 96,
+      access_type: 'offline' # Important for refresh token
     }
 end

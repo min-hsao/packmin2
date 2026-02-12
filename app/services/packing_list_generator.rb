@@ -5,15 +5,22 @@ class PackingListGenerator
   end
   
   def generate
+    # Determine provider
+    provider = @packing_list.ai_provider.presence || @user.ai_provider
+    
+    # Skip weather for smart providers if requested
+    smart_providers = ['google_oauth', 'gemini', 'anthropic']
+    skip_weather = smart_providers.include?(provider)
+    
     # Fetch weather for all destinations
-    weather_data = fetch_weather
+    weather_data = skip_weather ? {} : fetch_weather
     @packing_list.update(weather_data: weather_data)
     
     # Build prompt
-    prompt = build_prompt(weather_data)
+    prompt = build_prompt(weather_data, skip_weather)
     
     # Generate with AI
-    raw_response = AiService.generate(prompt, @user)
+    raw_response = AiService.generate(prompt, @user, provider)
     
     # Parse response
     parsed = parse_response(raw_response)
@@ -54,9 +61,15 @@ class PackingListGenerator
     weather
   end
   
-  def build_prompt(weather_data)
+  def build_prompt(weather_data, weather_skipped = false)
     traveler = @packing_list.traveler_info || {}
     destinations = @packing_list.destinations || []
+    
+    weather_section = if weather_skipped
+      "Please estimate the typical weather for these locations and dates, or use your knowledge/tools to find the forecast."
+    else
+      weather_data.map { |loc, w| "- #{loc}: High #{w[:high_f]}°F, Low #{w[:low_f]}°F, #{w[:conditions]}" }.join("\n")
+    end
     
     prompt = <<~PROMPT
       Create a comprehensive packing list for the following trip:
@@ -66,7 +79,7 @@ class PackingListGenerator
       Total duration: #{@packing_list.total_days} days
 
       ## Weather Conditions
-      #{weather_data.map { |loc, w| "- #{loc}: High #{w[:high_f]}°F, Low #{w[:low_f]}°F, #{w[:conditions]}" }.join("\n")}
+      #{weather_section}
 
       ## Traveler
       - Gender: #{traveler['gender'] || 'Not specified'}
